@@ -25,6 +25,8 @@ struct Node {
     Node(Point _point = Point(0, 0)) : point(_point), F(0), G(0), H(0), parent(NULL) {}
 };
 
+// 这是函数对象，重载了()。
+// 目的是让对象表现的像函数，例如，vector<cmp>这样是允许的，然后调用()就可以调用cmp中重载的()，但是如果把cmp定义为普通的函数的话，那么vector<cmp>就是不允许的了
 struct cmp {
     bool operator()(pair<int, Point> a, pair<int, Point> b)  // Comparison function for priority queue
     {
@@ -54,7 +56,9 @@ public:
                   int thickness = 1,
                   Scalar maskcolor = Scalar(255, 255, 255));
 
+    // 2D坐标 → 1D索引，是一个映射函数
     inline int point2index(Point point) { return point.y * Map.cols + point.x; }
+    // 1D索引 → 2D坐标，是一个反映射函数
     inline Point index2point(int index) { return Point(int(index / Map.cols), index % Map.cols); }
 
 private:
@@ -65,18 +69,20 @@ private:
 private:
     // Object
     Mat Map;
-    Point startPoint, targetPoint;
-    Mat neighbor;
+    Point startPoint, targetPoint;  // 栅格坐标系下的点
+    Mat neighbor;                   // 8行2列的矩阵，代表某个点的8个邻接方向
 
-    Mat LabelMap;
+    Mat LabelMap;  // 障碍物标记地图
     AstarConfig config;
 
-    priority_queue<pair<int, Point>, vector<pair<int, Point>>, cmp> OpenList;  // open list
-    unordered_map<int, Node*> OpenDict;                                        // open dict
-    vector<Node*> PathList;                                                    // path list
+    // 开放列表中存放的是已经发现但是还没有去探索的那些节点
+    priority_queue<pair<int, Point>, vector<pair<int, Point>>, cmp>
+        OpenList;                        // open list，优先队列，队列中的元素是pair<int,
+                                         // Point>,cmp是优先级排列的自定义函数，vector不用管，这是优先队列中的容器
+    unordered_map<int, Node*> OpenDict;  // open dict,这里边存放了完整的node,最重要的是有父节点信息
+    vector<Node*> PathList;              // path list
 };
 
 }  // namespace pathplanning
 
 #endif  // ASTAR_H
-

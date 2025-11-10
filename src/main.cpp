@@ -145,6 +145,7 @@ int main(int argc, char* argv[]) {
             double start_time = ros::Time::now().toSec();
             // Start planning path
             vector<Point> PathList;
+            // startPoint、targetPoint已经是栅格地图坐标系下的点了
             astar.PathPlanning(startPoint, targetPoint, PathList);
             if (!PathList.empty()) {
                 path.header.stamp = ros::Time::now();

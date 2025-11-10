@@ -89,6 +89,7 @@ void Astar::MapProcess(Mat& Mask) {
     LabelMap = Mat::zeros(height, width, CV_8UC1);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
+            // 可以理解为这里的索引关系是opencv中一个比较独特的方式，规定CV_8UC1类型的元素的索引就是通过at<uchar>来建立的
             if (_Map.at<uchar>(y, x) == 0) {
                 LabelMap.at<uchar>(y, x) = obstacle;
             } else {
@@ -105,9 +106,11 @@ Node* Astar::FindPath() {
 
     // Add startPoint to OpenList
     Node* startPointNode = new Node(startPoint);
+    // openlist只存放了代价和点位，没有其余信息了，所以需要opendict存放完整的Node
     OpenList.push(pair<int, Point>(startPointNode->F, startPointNode->point));
     int index = point2index(startPointNode->point);
     OpenDict[index] = startPointNode;
+    // 可以理解为这里的索引关系是opencv中一个比较独特的方式，规定CV_8UC1类型的元素的索引就是通过at<uchar>()来建立的
     _LabelMap.at<uchar>(startPoint.y, startPoint.x) = inOpenList;
 
     while (!OpenList.empty()) {
@@ -168,8 +171,10 @@ Node* Astar::FindPath() {
                     int index = point2index(node->point);
                     OpenDict[index] = node;
                     _LabelMap.at<uchar>(y, x) = inOpenList;
-                } else  // _LabelMap.at<uchar>(y, x) == inOpenList
-                {
+                } else {
+                    // 这个分支可以理解成：如果这个循环里边走到当前节点所花的代价比之前走到当前节点要小，
+                    // 那么就把路线更新成这次走过来的路线，只所以不比较H代价是因此H代价是相等的，都是从
+                    // 当前到目标的代价
                     // Find the node
                     int index = point2index(Point(x, y));
                     Node* node = OpenDict[index];
