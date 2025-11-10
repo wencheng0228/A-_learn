@@ -12,10 +12,12 @@ void Astar::InitAstar(Mat& _Map, AstarConfig _config) {
 }
 
 void Astar::InitAstar(Mat& _Map, Mat& Mask, AstarConfig _config) {
+    // 8行2列的字符数组，代表某个点的8个邻接方向
     char neighbor8[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
 
     Map = _Map;
     config = _config;
+    // CV_8S 8位有符号整数
     neighbor = Mat(8, 2, CV_8S, neighbor8).clone();
 
     MapProcess(Mask);
@@ -53,23 +55,37 @@ void Astar::MapProcess(Mat& Mask) {
     }
 
     // Binarize
+    // 二值化
     if (config.OccupyThresh < 0) {
+        // THRESH_OTSU 自动计算最佳阈值
         threshold(_Map.clone(), _Map, 0, 255, cv::THRESH_OTSU);
     } else {
+        // 标准二值化
         threshold(_Map.clone(), _Map, config.OccupyThresh, 255, cv::THRESH_BINARY);
     }
 
     // Inflate
     Mat src = _Map.clone();
     if (config.InflateRadius > 0) {
+        // 创建一个结构元素（类似于不同形状的画笔（矩形、十字形、椭圆形），用于对障碍物做膨胀）
         Mat se = getStructuringElement(MORPH_ELLIPSE, Size(2 * config.InflateRadius, 2 * config.InflateRadius));
+        /**
+         * 基于创建的结构元素对原图做腐蚀。原理示例：假设有一个像素点的像素值是0(障碍物)，周边都是1(非障碍物)，
+         * 然后用一个3*3的结构元素覆盖这个像素点，然后再调用erode函数做腐蚀，由于erode函数会返回区域内的最小值，
+         * 所以经过腐蚀以后，这个3*3的区域内所有像素点就都被腐蚀成0了，因此障碍物区域变大了，膨胀了
+         */
         erode(src, _Map, se);
     }
 
     // Get mask
+    /**
+     * 将腐蚀前和腐蚀后的两幅地图逐元素按位做异或，例如，腐蚀前的[0][2]像素的是0(二进制是00000000),腐蚀后的[0][2]像素的是255(二进制是11111111)，
+     * 那么做异或以后的结果是11111111，转成十进制是255，所以这个像素点在腐蚀前后是不一样的，Mask中的[0][2]元素就被标注为255
+     */
     bitwise_xor(src, _Map, Mask);
 
     // Initial LabelMap
+    // 基于膨胀后的栅格地图构建障碍物标记地图
     LabelMap = Mat::zeros(height, width, CV_8UC1);
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {

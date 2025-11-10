@@ -47,6 +47,7 @@ void MapCallback(const nav_msgs::OccupancyGrid& msg) {
     int width = OccGridParam.width;
     int OccProb;
     Mat Map(height, width, CV_8UC1);
+    // i++ j++是像素索引，跟物理距离索引不是一回事
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             OccProb = msg.data[i * width + j];
@@ -58,6 +59,7 @@ void MapCallback(const nav_msgs::OccupancyGrid& msg) {
 
     // Initial Astar
     Mat Mask;
+    // 四舍五入
     config.InflateRadius = round(InflateRadius / OccGridParam.resolution);
     astar.InitAstar(Map, Mask, config);
 
